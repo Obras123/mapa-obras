@@ -2,44 +2,177 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Mapa Funcionando</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Fiscalização - Prefeitura de Tiradentes</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        #map { height: 600px; }
+        #map {
+            width: 100%;
+            height: 600px;
+            margin: 20px 0;
+            border: 2px solid #2c3e50;
+            border-radius: 8px;
+        }
+
+        .legend {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-family: Arial, sans-serif;
+        }
+
+        .legend h4 {
+            margin: 0 0 12px;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+
+        .legend-line {
+            width: 35px;
+            height: 4px;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
+    <h1 style="text-align: center; color: #2c3e50; margin: 20px 0;">Mapa de Fiscalização de Obras</h1>
+    
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        const map = L.map('map').setView([-21.1225, -44.1975], 14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        // Inicialização segura do mapa
+        let map;
+        try {
+            map = L.map('map').setView([-21.1225, -44.1975], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+        } catch (error) {
+            console.error('Erro na inicialização do mapa:', error);
+            document.getElementById('map').innerHTML = '<p style="color:red">Erro ao carregar o mapa</p>';
+        }
 
-        // Função 100% testada
-        async function carregarCamada(caminho, nome, cor) {
+        // Função de carregamento robusta
+        async function carregarCamada(caminho, nome, cor, tipo) {
             try {
                 const response = await fetch(caminho);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
                 const data = await response.json();
                 
-                L.geoJSON(data, {
-                    style: { color: cor, weight: 4 },
-                    pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
-                        radius: 8,
-                        fillColor: cor,
-                        fillOpacity: 1
-                    })
-                }).addTo(map);
+                const options = {
+                    style: {
+                        color: cor,
+                        weight: tipo === 'linha' ? 5 : 2,
+                        opacity: 0.8
+                    },
+                    onEachFeature: (feature, layer) => {
+                        let popupContent = `<b>${nome}</b>`;
+                        if (feature.properties) {
+                            for (const [key, value] of Object.entries(feature.properties)) {
+                                popupContent += `<br>${key}: ${value}`;
+                            }
+                        }
+                        layer.bindPopup(popupContent);
+                    }
+                };
+
+                if (tipo === 'ponto') {
+                    options.pointToLayer = (feature, latlng) => {
+                        return L.circleMarker(latlng, {
+                            radius: 8,
+                            fillColor: cor,
+                            color: '#2c3e50',
+                            weight: 1,
+                            fillOpacity: 0.8
+                        });
+                    };
+                }
+
+                L.geoJSON(data, options).addTo(map);
             } catch (error) {
-                console.error(`Erro em ${nome}:`, error);
+                console.error(`Erro na camada ${nome}:`, error);
+                const errorDiv = document.createElement('div');
+                errorDiv.innerHTML = `<p style="color:red">Erro em ${nome}: ${error.message}</p>`;
+                document.body.appendChild(errorDiv);
             }
         }
 
-        // Carregar camadas
-        carregarCamada('docs/arquivos_geojson/caminho_fiscalizado.geojson', 'Caminho', '#FF0000');
-        carregarCamada('docs/arquivos_geojson/obras_com_alvaras.geojson', 'Alvarás', '#00FF00');
-        carregarCamada('docs/arquivos_geojson/obras_irregulares.geojson', 'Irregulares', '#FFA500');
-        carregarCamada('docs/arquivos_geojson/notificados.geojson', 'Notificados', '#800080');
+        // Lista de camadas
+        const camadas = [
+            {
+                nome: 'Caminho Fiscalizado',
+                caminho: 'docs/arquivos_geojson/caminho_fiscalizado.geojson',
+                cor: '#e74c3c',
+                tipo: 'linha'
+            },
+            {
+                nome: 'Obras com Alvarás',
+                caminho: 'docs/arquivos_geojson/obras_com_alvaras.geojson',
+                cor: '#2ecc71',
+                tipo: 'ponto'
+            },
+            {
+                nome: 'Obras Irregulares',
+                caminho: 'docs/arquivos_geojson/obras_irregulares.geojson',
+                cor: '#f1c40f',
+                tipo: 'ponto'
+            },
+            {
+                nome: 'Notificados',
+                caminho: 'docs/arquivos_geojson/notificados.geojson',
+                cor: '#9b59b6',
+                tipo: 'ponto'
+            }
+        ];
+
+        // Carregar todas as camadas
+        camadas.forEach(camada => {
+            carregarCamada(camada.caminho, camada.nome, camada.cor, camada.tipo);
+        });
+
+        // Legenda reforçada
+        function criarLegenda() {
+            const legend = L.control({ position: 'bottomright' });
+            legend.onAdd = () => {
+                const div = L.DomUtil.create('div', 'legend');
+                div.innerHTML = `
+                    <h4>Legenda</h4>
+                    ${camadas.map(camada => `
+                        <div class="legend-item">
+                            <div class="${camada.tipo === 'linha' ? 'legend-line' : 'legend-color'}" 
+                                 style="background:${camada.cor}"></div>
+                            ${camada.nome}
+                        </div>
+                    `).join('')}
+                `;
+                return div;
+            };
+            legend.addTo(map);
+        }
+
+        // Garantir que a legenda seja criada após o carregamento
+        if (map) {
+            map.whenReady(() => {
+                criarLegenda();
+            });
+        }
     </script>
 </body>
 </html>
