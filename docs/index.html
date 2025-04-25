@@ -1,53 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa Interativo - Prefeitura de Tiradentes</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <style>
-        #map {
-            width: 100%;
-            height: 600px;
-            margin: 20px 0;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-        }
-
-        .legend {
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            font-family: Arial, sans-serif;
-        }
-
-        .legend h4 {
-            margin: 0 0 10px;
-            color: #333;
-            font-size: 16px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin: 8px 0;
-        }
-
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            border-radius: 50%;
-            border: 2px solid #333;
-        }
-
-        .legend-line {
-            width: 30px;
-            height: 4px;
-            margin-right: 10px;
-        }
-    </style>
+    <!-- ... (mantenha o mesmo cabeçalho e CSS) ... -->
 </head>
 <body>
     <h1 style="text-align: center; color: #2c3e50;">Fiscalização de Obras - Tiradentes/MG</h1>
@@ -55,79 +9,46 @@
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        // Configuração do mapa
         const map = L.map('map').setView([-21.1225, -44.1975], 14);
 
-        // Camada base
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        // Camada Base
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // Função para carregar camadas
-        function carregarCamada(caminho, nome, cor, tipo = 'ponto') {
+        // Função Corrigida
+        function carregarCamada(caminho, nome, cor, tipo) {
             fetch(caminho)
                 .then(response => response.json())
                 .then(data => {
-                    L.geoJSON(data, {
+                    const camada = L.geoJSON(data, {
                         pointToLayer: (feature, latlng) => {
-                            if (tipo === 'ponto') {
-                                return L.circleMarker(latlng, {
-                                    radius: 8,
-                                    fillColor: cor,
-                                    color: "#333",
-                                    weight: 1,
-                                    fillOpacity: 0.8
-                                });
-                            }
-                            return L.marker(latlng);
+                            return L.circleMarker(latlng, {
+                                radius: 8,
+                                fillColor: cor,
+                                color: "#333",
+                                weight: 1,
+                                fillOpacity: 1
+                            });
                         },
-                        style: () => ({
+                        style: {
                             color: cor,
-                            weight: tipo === 'linha' ? 4 : 2,
-                            opacity: 0.8
-                        }),
+                            weight: 6,
+                            opacity: 1
+                        },
                         onEachFeature: (feature, layer) => {
-                            if (feature.properties) {
-                                let popupContent = `<b>${nome}</b><br>`;
-                                for (const [key, value] of Object.entries(feature.properties)) {
-                                    popupContent += `${key}: ${value}<br>`;
-                                }
-                                layer.bindPopup(popupContent);
-                            }
+                            layer.bindPopup(`<b>${nome}</b>`);
                         }
                     }).addTo(map);
                 })
-                .catch(error => console.error(`Erro ${nome}:`, error));
+                .catch(error => console.error("Erro:", error));
         }
 
-        // Carregar todas as camadas
+        // Carregar Camadas
         carregarCamada('arquivos_geojson/caminho_fiscalizado.geojson', 'Caminho Fiscalizado', '#e74c3c', 'linha');
         carregarCamada('arquivos_geojson/obras_com_alvaras.geojson', 'Obras com Alvarás', '#2ecc71', 'ponto');
         carregarCamada('arquivos_geojson/obras_irregulares.geojson', 'Obras Irregulares', '#f1c40f', 'ponto');
         carregarCamada('arquivos_geojson/notificados.geojson', 'Notificados', '#9b59b6', 'ponto');
 
-        // Adicionar legenda
-        const legend = L.control({ position: 'bottomright' });
-        legend.onAdd = () => {
-            const div = L.DomUtil.create('div', 'legend');
-            div.innerHTML = `
-                <h4>Legenda</h4>
-                <div class="legend-item">
-                    <div class="legend-line" style="background:#e74c3c"></div>Caminho Fiscalizado
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background:#2ecc71"></div>Obras com Alvarás
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background:#f1c40f"></div>Obras Irregulares
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background:#9b59b6"></div>Notificados
-                </div>
-            `;
-            return div;
-        };
-        legend.addTo(map);
+        // ... (mantenha a legenda) ...
     </script>
 </body>
 </html>
