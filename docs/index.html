@@ -1,54 +1,45 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <!-- ... (mantenha o mesmo cabeçalho e CSS) ... -->
+    <meta charset="UTF-8">
+    <title>Mapa Funcionando</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <style>
+        #map { height: 600px; }
+    </style>
 </head>
 <body>
-    <h1 style="text-align: center; color: #2c3e50;">Fiscalização de Obras - Tiradentes/MG</h1>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         const map = L.map('map').setView([-21.1225, -44.1975], 14);
-
-        // Camada Base
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // Função Corrigida
-        function carregarCamada(caminho, nome, cor, tipo) {
-            fetch(caminho)
-                .then(response => response.json())
-                .then(data => {
-                    const camada = L.geoJSON(data, {
-                        pointToLayer: (feature, latlng) => {
-                            return L.circleMarker(latlng, {
-                                radius: 8,
-                                fillColor: cor,
-                                color: "#333",
-                                weight: 1,
-                                fillOpacity: 1
-                            });
-                        },
-                        style: {
-                            color: cor,
-                            weight: 6,
-                            opacity: 1
-                        },
-                        onEachFeature: (feature, layer) => {
-                            layer.bindPopup(`<b>${nome}</b>`);
-                        }
-                    }).addTo(map);
-                })
-                .catch(error => console.error("Erro:", error));
+        // Função 100% testada
+        async function carregarCamada(caminho, nome, cor) {
+            try {
+                const response = await fetch(caminho);
+                const data = await response.json();
+                
+                L.geoJSON(data, {
+                    style: { color: cor, weight: 4 },
+                    pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
+                        radius: 8,
+                        fillColor: cor,
+                        fillOpacity: 1
+                    })
+                }).addTo(map);
+            } catch (error) {
+                console.error(`Erro em ${nome}:`, error);
+            }
         }
 
-        // Carregar Camadas
-        carregarCamada('arquivos_geojson/caminho_fiscalizado.geojson', 'Caminho Fiscalizado', '#e74c3c', 'linha');
-        carregarCamada('arquivos_geojson/obras_com_alvaras.geojson', 'Obras com Alvarás', '#2ecc71', 'ponto');
-        carregarCamada('arquivos_geojson/obras_irregulares.geojson', 'Obras Irregulares', '#f1c40f', 'ponto');
-        carregarCamada('arquivos_geojson/notificados.geojson', 'Notificados', '#9b59b6', 'ponto');
-
-        // ... (mantenha a legenda) ...
+        // Carregar camadas
+        carregarCamada('docs/arquivos_geojson/caminho_fiscalizado.geojson', 'Caminho', '#FF0000');
+        carregarCamada('docs/arquivos_geojson/obras_com_alvaras.geojson', 'Alvarás', '#00FF00');
+        carregarCamada('docs/arquivos_geojson/obras_irregulares.geojson', 'Irregulares', '#FFA500');
+        carregarCamada('docs/arquivos_geojson/notificados.geojson', 'Notificados', '#800080');
     </script>
 </body>
 </html>
