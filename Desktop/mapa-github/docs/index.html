@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Interativo - Prefeitura</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            width: 100%;
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mapa Interativo da Prefeitura</h1>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([-21.1225, -44.1975], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        function carregarGeoJSON(caminho) {
+            fetch(caminho)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro na requisição: ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    L.geoJSON(data, {
+                        style: function (feature) {
+                            return {
+                                color: 'blue',
+                                weight: 2,
+                                opacity: 1
+                            };
+                        }
+                    }).addTo(map);
+                })
+                .catch(error => console.log('Erro ao carregar o arquivo GeoJSON: ' + error));
+        }
+
+        carregarGeoJSON('caminho_fiscalizado.geojson');
+        carregarGeoJSON('obras_com_alvaras.geojson');
+        carregarGeoJSON('terrenos_novos.geojson');
+        carregarGeoJSON('obras_irregulares.geojson');
+        carregarGeoJSON('projeto_em_analise.geojson');
+        carregarGeoJSON('notificados.geojson');
+    </script>
+</body>
+</html>
