@@ -60,11 +60,11 @@
         }
 
         // Carregar todos os GeoJSONs com cores específicas
-        carregarGeoJSON('arquivos_geojson/caminho84.geojson', '#FF0000');         // Vermelho
-        carregarGeoJSON('arquivos_geojson/alvaras84.geojson', '#00FF00');        // Verde
-        carregarGeoJSON('arquivos_geojson/analise84.geojson', '#0000FF');        // Azul
-        carregarGeoJSON('arquivos_geojson/irregular84.geojson', '#FFA500');      // Laranja
-        carregarGeoJSON('arquivos_geojson/notificacao84.geojson', '#800080');    // Roxo
+        carregarGeoJSON('arquivos_geojson/caminho84.geojson');       // Caminho Fiscalizado
+        carregarGeoJSON('arquivos_geojson/alvaras84.geojson');       // Obras com Alvarás
+        carregarGeoJSON('arquivos_geojson/analise84.geojson');       // Projeto em Análise
+        carregarGeoJSON('arquivos_geojson/irregular84.geojson');     // Obras Irregulares
+        carregarGeoJSON('arquivos_geojson/notificacao84.geojson');   // Notificados
 
         // Adicionar controle de camadas
         var legend = L.control({ position: 'bottomright' });
