@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -9,50 +8,80 @@
     <style>
         #map {
             width: 100%;
-            height: 500px;
+            height: 600px;  <!-- Aumentei a altura para melhor visualização -->
+            margin: 20px 0;
+            border: 1px solid #ccc;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
         }
     </style>
 </head>
 <body>
-    <h1>Mapa Interativo da Prefeitura</h1>
+    <h1>Mapa Interativo de Obras - Prefeitura de Tiradentes</h1>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
+        // Configuração inicial do mapa
         var map = L.map('map').setView([-21.1225, -44.1975], 14);
 
+        // Camada base do OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        function carregarGeoJSON(caminho) {
+        // Função para carregar GeoJSON com estilos diferentes
+        function carregarGeoJSON(caminho, cor) {
             fetch(caminho)
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erro na requisição: ' + response.statusText);
-                    }
+                    if (!response.ok) throw new Error('Erro ao carregar: ' + response.statusText);
                     return response.json();
                 })
                 .then(data => {
                     L.geoJSON(data, {
-                        style: function (feature) {
-                            return {
-                                color: 'blue',
-                                weight: 2,
-                                opacity: 1
-                            };
+                        style: {
+                            color: cor,
+                            weight: 3,
+                            opacity: 0.8,
+                            fillOpacity: 0.2
+                        },
+                        onEachFeature: function(feature, layer) {
+                            if (feature.properties) {
+                                layer.bindPopup(Object.entries(feature.properties)
+                                    .map(([key, value]) => `<b>${key}:</b> ${value}`)
+                                    .join('<br>'));
+                            }
                         }
                     }).addTo(map);
                 })
-                .catch(error => console.log('Erro ao carregar o arquivo GeoJSON: ' + error));
+                .catch(error => console.error('Erro:', error));
         }
 
-        carregarGeoJSON('caminho_fiscalizado.geojson');
-        carregarGeoJSON('obras_com_alvaras.geojson');
-        carregarGeoJSON('terrenos_novos.geojson');
-        carregarGeoJSON('obras_irregulares.geojson');
-        carregarGeoJSON('projeto_em_analise.geojson');
-        carregarGeoJSON('notificados.geojson');
+        // Carregar todos os GeoJSONs com cores específicas
+        carregarGeoJSON('arquivos_geojson/caminho84.geojson', '#FF0000');         // Vermelho
+        carregarGeoJSON('arquivos_geojson/alvaras84.geojson', '#00FF00');        // Verde
+        carregarGeoJSON('arquivos_geojson/analise84.geojson', '#0000FF');        // Azul
+        carregarGeoJSON('arquivos_geojson/irregular84.geojson', '#FFA500');      // Laranja
+        carregarGeoJSON('arquivos_geojson/notificacao84.geojson', '#800080');    // Roxo
+
+        // Adicionar controle de camadas
+        var legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'legend');
+            div.innerHTML = `
+                <h4>Legenda</h4>
+                <div><span style="background:#FF0000"></span> Caminho Fiscalizado</div>
+                <div><span style="background:#00FF00"></span> Obras com Alvarás</div>
+                <div><span style="background:#0000FF"></span> Projeto em Análise</div>
+                <div><span style="background:#FFA500"></span> Obras Irregulares</div>
+                <div><span style="background:#800080"></span> Notificados</div>
+            `;
+            return div;
+        };
+        legend.addTo(map);
+
     </script>
 </body>
 </html>
